@@ -18,11 +18,14 @@ class Road():
         
         self.name = name                    # Road Name - REQUIRED
         self.L = length                     # Integer - Road length - [5m]
-        self.limit = speed_limit            # Integer - Speed Limit - [ms-1]
+        self.limit = speed_limit            # Integer - Speed Limit - [5ms-1]
         self.density = density              # Float - Initial Car Density
         self.slow_prob = slow_probability   # Float - Probability of slowing
         self.closed = closed_loop           # Boolean - Is road a loop
-        
+
+
+
+# --- Road Generation ---        
                 
 def Generate_Busy_Road(Road, start_speed=0):
     """Road is an object of class Road()."""
@@ -42,7 +45,7 @@ def Generate_Busy_Road(Road, start_speed=0):
 
 
 
-
+# --- Car Management Functions ---
 
 def Spaces_Ahead(road, road_array, site):
     """Returns number of spaces ahead of a car with regard to its speed"""
@@ -51,6 +54,7 @@ def Spaces_Ahead(road, road_array, site):
         if road_array[(site+i+1)%road.L] != -1:
             return i
     return road.limit-1
+
 
 
 def Accel(road, road_array):
@@ -85,12 +89,12 @@ def Move(road, road_array):
     
     for i in range(road.L-1, -1, -1):
         car_speed = int(road_array[i])
+        
         if car_speed > 0:
             road_array[(i+car_speed)%road.L] = road_array[i]    # Move car
-            road_array[i] = -1
-
+            road_array[i] = -1             # Remove car from previous position
             
-            # Prevents moving the same car twice if it travels from end to start of the array. 
+            # Below prevents moving the same car twice if it travels from end to start of the array.  
             if i > road.L-1-road.limit and (i+car_speed)%road.L < road.limit\
             and loop_stop == -1:
                 loop_stop = (i+car_speed)%road.L + 1
@@ -122,6 +126,9 @@ def Run_Road(road, road_array, Time, watch_cars=False):
     return moved_road
 
 
+
+# --- Dataset Extraction --- 
+
 def Dataset_To_Array(road, time):
     """ Opens HDF5 file and converts into array at given time"""
     
@@ -134,8 +141,7 @@ def Dataset_To_Array(road, time):
 
 
     
-
-#--- Plot Car Positions ---
+#--- Visualisation of Car Positions ---
 
 def show_road(road, road_array):
 
@@ -161,18 +167,7 @@ def show_road(road, road_array):
     plt.show()
     
     
-#--- Run Simulation ---
-   
-Road1 = Road(name="Road1")
 
-R1 = Generate_Busy_Road(Road1)  
-# Array Containing initial car positions/speeds
-    
-Time = 1000              # Total time the simulation is run for
-show_road(Road1, R1)    # Show inital state of the road
-
-final_road = Run_Road(Road1, R1, Time, watch_cars=False)  
-# Array of the final positions of cars. The function will write a similar array, at every time step, to a compresssed file and these can be extracted at any point. 
 
 
 def Locations_And_Speed_Arrays(road_array):
@@ -192,7 +187,7 @@ def Locations_And_Speed_Arrays(road_array):
     return [car_locations, car_speeds]
    
 
-def Generate_Heatmap(road):
+def Generate_Heatmap(road, Time):
     """ Generates a graphical heatmap for cars on the road over time based on their speeds and locations"""
     
     cm = plt.cm.get_cmap('hot')     # "Fire Effect" colourmap
@@ -208,10 +203,28 @@ def Generate_Heatmap(road):
     
     plt.colorbar(sc)
     plt.show()
-
-Generate_Heatmap(Road1)
-
     
-        
+    
+
+#--- Run Simulation ---
+   
+Road1 = Road(name="Road1")
+Road2 = Road(name="Road2")
+
+R1 = Generate_Busy_Road(Road1)  
+R2 = Generate_Busy_Road(Road2)  
+# Arrays Containing initial car positions/speeds
+    
+Time = 60              # Total in-simulation time [s]
+ 
+show_road(Road1, R1)    # Show inital state of the road
+show_road(Road2, R2)    # Show inital state of the road
+
+final_road1 = Run_Road(Road1, R1, Time, watch_cars=False)
+final_road2 = Run_Road(Road2, R2, Time, watch_cars=False)  
+# Array of the final positions of cars. The function will write a similar array, at every time step, to a compresssed file and these can be extracted at any point. 
+
+Generate_Heatmap(Road1, Time)
+Generate_Heatmap(Road2, Time)
 
 
